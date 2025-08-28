@@ -47,3 +47,6 @@ if possible i will create a makefile (the original one would still work but just
 1.  >g++ -std=c++17 -O2 -Isrc -Ilib //including all the cpp files here// -o rover.exe #example
 
 2. rover.exe test/testcase{x}.txt outputresults{x}.txt #example
+
+
+-> ![image](https://github.com/user-attachments/assets/314e5dd8-536b-48d1-a423-3d4391174e08)
