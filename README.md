@@ -42,3 +42,8 @@ So the solution needed to be flexible enough to handle both smooth paths and zig
 
 # Thoughts
 It was a really fun project/test. Thank you
+
+if possible i will create a makefile (the original one would still work but just in case ) for this project alongwith the code but the compilation would still work with (since i am using cpp 17)
+ >g++ -std=c++17 -O2 -Isrc -Ilib <<including all the cpp files here>> -o rover.exe #example
+and then
+rover.exe test/testcase{x}.txt outputresults{x}.txt #example
