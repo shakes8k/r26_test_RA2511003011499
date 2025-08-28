@@ -1,72 +1,44 @@
-# R26_test
-
-<p align="center">
-  <img src="https://github.com/teamrudra/r26_test/blob/main/misc/rover.webp" width="480" height="480"/>
-
-#### Some Instructions
-1. You may use any online resources, datasheets, or documentation needed, but be mindful of your time and stay focused on the task.
-2. The duration of the test is 90 mins from 5:15pm to 6:45 pm.
-3. There will be a MCQ test conducted [here](https://rudra26test.vercel.app/)
-4. There are 4 tasks in the tests. Complete all of them.
-5. In case you are not able to complete all the tasks, do upload whatever you are able to.
-6. In the `README.md` of your repository include your thought process, places where you got stuck, where you used the help of AI, google or other online resources.
-7. Even if you are not able to solve anything, do fill the readme and what your thought process would have been.
-8. Carefully read the instructions to implement the required functionality.
-9. Install [mingw(c compiler)](https://www.mingw-w64.org/downloads/#w64devkit) and [git](https://git-scm.com/downloads) if you haven't already done it.
-10. After finishing your test, provide the link to your forked repository in the google form provided at the end.
-
-### Aim/Objective: To decode GPS data of start and goal position, and create a path planning algorithm which computes an optimal path over a predefined gridmap
-
-## Description
-You are implementing code to decode GPS position data, received from a u-blox GNSS module on-board a rover (check out the [datasheet](https://drive.google.com/file/d/1rOcPxpP-3JE8l39kBMiQV6KKe8B6zlDf/view)). You are given the current/start position of the rover and the goal position where the rover has to reach, your goal is to develop a path planning algorithm to traverse over a pre-defined gridmap and generate necessary odometry commands (total time & angle traversed) to guide the rover along the generated path. 
-
-### Task 0: Fork the provided repository and ensure it is set to PUBLIC so we can access and assess your work.
-### Task 1: Decoding gps data (in ubx format) from u-blox reciever.
-Working with UBX format and extracted relevant navigation data for use in the planner.
-### Task 2: Develop a path planning algorithm to traverse over a gridmap.
-Implemented a grid-based path planner that computes an optimal route from start to goal.
-### Task 3: Generate odometry commands to guide the rover along the generated path.
-Converted the path into motion commands (direction and timing) based on wheel parameters.
-### Task 4: Compile and run the code.
-Verified the workflow on sample inputs and ensured the project compiles successfully with g++.
-
-#### Code
-1. [src/main.cpp](src/main.cpp): Code for running the test.
-2. [src/ublox_reader.cpp](src/ublox_reader.cpp): Recitfy errors in this code to compute correct lat & lon coordinates.
-3. [src/planning.cpp](src/planning.cpp): Complete the defined `Planner::pathplanning` function 
-4. [src/odometry.cpp](src/odometry.cpp): Complete the defined `Odometry::computeCommands` function 
-
-#### How to Compile & Check your code
-(make sure you are in the root directory)   
-1. Compile your code by running: `make build`
-2. To check if your code is implemented correctly run: `make check`
-   
-If you are able to compile your code successfully you should see something like this on your screen:
-
-```
-*** Success: ***
---------------------------------------------
-```
-
-4. If your make check was unsuccesfull, you can clean your attempt by running `make clean`, review your implementation and repeat the previous steps.
-
+# RA26_Test
 # Solution
 ## Understanding
-Describe what you understood about the problem.
+This project takes raw GPS data from a u-blox receiver in UBX hex format and converts it into usable navigation commands for a rover. The GPS data is first decoded to extract latitude, longitude, and height, then mapped into a local grid around the start position. Using this grid, an A* path planner computes a collision free path from the start gps point to the goal gps point. The path is then translated into odometry commands based on the rover’s wheel radius and RPM: total traversal time (distance ÷ velocity) and total angular rotation. 
+The final outputs required were:
+* The time it would take to traverse the planned path (based on wheel radius and RPM).
+* The total angular rotation the rover performs while following the path.
 
 ## Thought Process
-After understanding the problem, describe how you decided to proceed towards solving the question.
+I broke the problem into clear stages, mirroring the actual navigation pipeline of a rover:
+* Decode UBX GPS data → convert from raw hex to latitude, longitude, and height
+* Grid mapping → transform GPS coordinates into a local grid representation with obstacles
+* Path planning → use the A* algorithm on the grid to find a path from start cell to goal cell
+* Odometry → convert the path into rover motion commands, specifically computing time and angle   based on wheel radius and RPM
 
-## Implementation
-How did you decide to implement your solution.
+** During development I realized that time always matched (distance ÷ velocity), but rotation didnt, by analyzing the expected outputs, I saw a pattern in some cases the grader used shortest turns plus a final parking rotation while in others they used accumulated counter-clockwise turns. This explained why one testcase gave 225°, another 720°, and another 540° — all multiples of 45° but from different conventions
+So the solution needed to be flexible enough to handle both smooth paths and zig-zag paths that inflate rotation totals, yet my own solutions did not make up the mark but I shared it in <odometry.cpp> comments, on how I approached the problem. I have also given a descriptive information regarding it below:
 
-Mention the details, such as the path planning & odometry how you tested it.
+## Implementations
+* UBX Decoder:
+1.  Implemented decodeUBX() to extract NAV-POSLLH fields. Handled both full UBX frames and shorter “headerless” inputs. Converted lat/lon from 1e-7 degrees to degrees, and height from mm to meters
+2. Each field was unpacked using memcpy into the classId struct, then converted into human-friendly units
+3. Finally, a helper function readUbloxFile() was used to read two lines from a file (start and goal positions) and convert them into GPS structures
 
-# Google Form
-[Link to Repo Submission](https://docs.google.com/forms/d/e/1FAIpQLSdlVJ2LzP8wUOATRD804zDVL611rwwGMO1y_ecYu5aoV5YQfw/viewform)
+* Grid Mapper 
+1. The start GPS coordinate was taken as the origin (0,0) of the grid map.
+2. For demonstration and testing, obstacles were hard-coded (walls), the grid was initialized as a 2D boolean array
+
+* Path Planner 
+1. Each grid cell (row, col) Neighbors: 8 directions were allowed (up, down, left, right, and 4 diagonals).
+2. **Euclidean distance** from the current gps coordinate to the goal point was admissible and consistent for this 8- connected grid 
+
+* Odometry
+1. Calculated path length from successive coordinates, then converted to meters (× cellsize)
+2. Linear velocity from wheel radius and RPM: v = 2 * pi * R * (RPM/60)
+3. For rotation implemented both shortest turn and CCW accumulated strategies but neither worked perfectly. available in <odometry.cpp> comments
 
 
-<p align="center">
-  <img src="https://github.com/teamrudra/r25-test/blob/main/datasheets/feynman-simple.jpg" width="600" height="600"/>
-</p>
-     
+# Problems
+1. Provided test cases did not have a full UBX frame (which were sync bytes) but that was not a major issue 
+2. The main persistent problem in this project was the rotation mismatch to which I have discussed above, and gave a few solutions in odometry.cpp comments.
+
+# Thoughts
+It was a really fun project/test. Thank you
