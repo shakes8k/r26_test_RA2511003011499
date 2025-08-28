@@ -38,7 +38,7 @@ So the solution needed to be flexible enough to handle both smooth paths and zig
 
 # Problems
 1. Provided test cases did not have a full UBX frame (which were sync bytes) but that was not a major issue 
-2. The main persistent problem in this project was the rotation mismatch to which I have discussed above, and gave a few solutions in odometry.cpp comments.
+2. The main persistent problem in this project was the rotation mismatch to which I have discussed above, and gave a few solutions in odometry.cpp comments yet resoluted to over shortest cumulative rotational angular change only.
 
 # Thoughts
 It was a really fun project/test. Thank you
