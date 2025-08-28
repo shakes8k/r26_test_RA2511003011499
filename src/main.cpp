@@ -1,11 +1,13 @@
-#include "gridmap.h"
-#include "odometry.h"
-#include "planning.h"
-#include "ublox_reader.h"
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <iomanip> 
+#include "gridmap.h"
+#include "odometry.h"
+#include "planning.h"
+#include "ublox_reader.h"
 
 using namespace std;
 
@@ -17,18 +19,14 @@ pair<double, double> directionFromAngle(double angle_deg) {
 
 int main(int argc, char *argv[]) {
 
-  if (argc < 2) {
-    cerr << "Usage: " << argv[0] << " <gps_data_file>" << endl;
+  if (argc < 3) {
+    cerr << "usage: " << argv[0] << " <gps_data_file> <output_file" << endl;
     return 1;
   }
 
-  // store file path to GPS data
   string gps_data = argv[1];
-
-  // file path to store result
   string odom_commands = argv[2];
 
-  // decode GPS data from file
   auto result = readUbloxFile(gps_data);
   if(static_cast<int>(result.first.lat)==0 && static_cast<int>(result.first.lon)==0 && static_cast<int>(result.second.lat)==0 && static_cast<int>(result.second.lon)==0)
   {
@@ -40,13 +38,13 @@ int main(int argc, char *argv[]) {
   cout << "Goal  -> Lat: " << result.second.lat << " Lon: " << result.second.lon
        << endl;
 
-  // Initialize Gridmapper with start as origin
+  // initialize Gridmapper with start as origin
   GPS origin = {result.first.lat, result.first.lon};
-  double cellsize = 1.0; // meters per grid cell
+  double cellsize = 1.0; 
   int rows = 10, cols = 10;
   Gridmapper grid(origin, cellsize, rows, cols);
 
-  // Convert start and goal GPS to grid coordinates
+  // convert start and goal GPS to grid coordinates
   pair<int, int> start = grid.gpstogrid(result.first);
   pair<int, int> goal = grid.gpstogrid(result.second);
 
@@ -55,37 +53,36 @@ int main(int argc, char *argv[]) {
   cout << "Goal  (grid) -> (" << goal.first << "," << goal.second << ")"
        << endl;
 
-  // Path planning
   Planner planner(grid.getGrid());
   auto path = planner.pathplanning(start, goal);
 
-  // print planned path
   cout << "Planned Path:" << endl;
   for (auto &p : path) {
     cout << "(" << p.first << "," << p.second << ") ";
   }
   cout << endl;
 
-  // Odometry commands
+  // Odometry results for terminal + seprt
   cout << "\nOdometry Commands" << endl;
-  double wheel_radius = 0.05; // meters
-  double rpm = 120;           // wheel speed
+  double wheel_radius = 0.05; 
+  double rpm = 120;           //  WTRMK - RA2511003011499 - Abhishek Singh
   Odometry odo(wheel_radius, rpm);
   auto commands = odo.computeCommands(path);
 
-  // computing total time and sec
   ofstream result_file(odom_commands);
 
-  // check if file is open
   if (!result_file.is_open()) {
     cerr << "Error: cannot open file " << odom_commands << endl;
     return 1;
   }
 
-  // writing result to file
+  cout << fixed << setprecision(4);
+  cout << "Time (s): " << commands.time_sec << "\n";
+  cout << "Total rotation (deg): " << commands.angle_deg << "\n";
+
+
   result_file << commands.time_sec << endl << commands.angle_deg << endl;
 
-  // closing file
   result_file.close();
 
   return 0;
