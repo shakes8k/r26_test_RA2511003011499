@@ -48,5 +48,8 @@ if possible i will create a makefile (the original one would still work but just
 
 2. rover.exe test/testcase{x}.txt outputresults{x}.txt #example
 
+3. About the total rotation part, I believe solving it through the shortest path might be the best approach:
+
+(Given testcase below assumes that the ROVER is at a 45 degree turn on its original coordinate)
 
 -> ![image](https://github.com/user-attachments/assets/314e5dd8-536b-48d1-a423-3d4391174e08)
